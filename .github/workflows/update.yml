@@ -45,7 +45,7 @@ jobs:
         env:
           FULL_SYNC: ${{ github.event.inputs.full_sync }}
         run: |
-          if [ "$GITHUB_EVENT_NAME" = "push" ] || [ "$FULL_SYNC" = "true" ] || [ ! -s data/draws.json ] || [ "$(python -c "import json; print(len(json.load(open('data/draws.json')).get('draws', [])))")" = "0" ]; then
+          if [ "$FULL_SYNC" = "true" ] || { [ "$GITHUB_EVENT_NAME" = "push" ] && ! git diff --quiet HEAD^ HEAD -- scripts/sync_lotto.py .github/workflows/update.yml; } || [ ! -s data/draws.json ] || [ "$(python -c "import json; print(len(json.load(open('data/draws.json')).get('draws', [])))")" = "0" ]; then
             python scripts/sync_lotto.py --full
           else
             python scripts/sync_lotto.py
