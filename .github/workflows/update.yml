@@ -61,6 +61,27 @@ jobs:
           Path("/tmp/lotto-ai.js").write_text(scripts[0], encoding="utf-8")
           PY
           node --check /tmp/lotto-ai.js
+      - name: Validate website HTML structure
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          if html.count("<html") != 1 or html.count("</html>") != 1:
+              raise SystemExit("HTML document must contain exactly one opening and closing html tag")
+          if html.count("<script>") != 1 or html.count("</script>") != 1:
+              raise SystemExit("HTML document must contain exactly one inline script block")
+          if html.index("</script>") > html.index("</body>") or html.index("</body>") > html.index("</html>"):
+              raise SystemExit("HTML closing tags are out of order")
+          if html.split("</html>", 1)[1].strip():
+              raise SystemExit("Unexpected content found after </html>; refusing to publish visible source text")
+          ids = re.findall(r'\\bid="([^"]+)"', html)
+          duplicates = sorted({item for item in ids if ids.count(item) > 1})
+          if duplicates:
+              raise SystemExit("Duplicate HTML ids: " + ", ".join(duplicates))
+          print("HTML structure passed: one document, one script, no trailing content, unique ids")
+          PY
       - name: Sync latest official lottery results
         env:
           FULL_SYNC: ${{ github.event.inputs.full_sync }}
