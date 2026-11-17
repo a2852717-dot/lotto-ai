@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/sync_lotto.py"
       - ".github/workflows/update.yml"
+      - "index.html"
   schedule:
     # 22:30 Taiwan time (UTC+8) every day
     - cron: "30 14 * * *"
