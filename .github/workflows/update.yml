@@ -43,6 +43,20 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: Validate sync script syntax
+        run: python -m py_compile scripts/sync_lotto.py
+      - name: Validate website JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script>([\\s\\S]*?)</script>", html)
+          if len(scripts) != 1:
+              raise SystemExit(f"Expected one inline script, found {len(scripts)}")
+          Path("/tmp/lotto-ai.js").write_text(scripts[0], encoding="utf-8")
+          PY
+          node --check /tmp/lotto-ai.js
       - name: Sync latest official lottery results
         env:
           FULL_SYNC: ${{ github.event.inputs.full_sync }}
@@ -61,6 +75,39 @@ jobs:
           else
             python scripts/sync_lotto.py
           fi
+      - name: Validate synchronized lottery data
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime
+          from pathlib import Path
+
+          payload = json.loads(Path("data/draws.json").read_text(encoding="utf-8"))
+          draws = payload.get("draws")
+          if not isinstance(draws, list) or not draws:
+              raise SystemExit("No draw records found")
+          if payload.get("draw_count") != len(draws):
+              raise SystemExit("draw_count does not match the actual records")
+          periods = [str(d.get("period", "")) for d in draws]
+          if any(not p for p in periods) or len(periods) != len(set(periods)):
+              raise SystemExit("Missing or duplicate draw periods")
+          previous_date = ""
+          for draw in draws:
+              date = draw.get("date", "")
+              datetime.strptime(date, "%Y-%m-%d")
+              if date < previous_date:
+                  raise SystemExit("Draw records are not sorted by date")
+              previous_date = date
+              numbers = draw.get("numbers")
+              if not isinstance(numbers, list) or len(numbers) != 6:
+                  raise SystemExit(f"{draw.get('period')}: expected six main numbers")
+              if len(set(numbers)) != 6 or any(not isinstance(n, int) or not 1 <= n <= 49 for n in numbers):
+                  raise SystemExit(f"{draw.get('period')}: invalid main numbers")
+              special = draw.get("special")
+              if not isinstance(special, int) or not 1 <= special <= 49:
+                  raise SystemExit(f"{draw.get('period')}: invalid special number")
+          print(f"Validated {len(draws)} draws: {draws[0]['date']} to {draws[-1]['date']}")
+          PY
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"
