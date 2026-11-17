@@ -1,7 +1,7 @@
 {
   "game": "大樂透",
   "source": "Taiwan Lottery official query API (historical monthly range)",
-  "updated_at": "2026-11-17T07:44:31+00:00",
+  "updated_at": "2026-11-17T07:47:32+00:00",
   "draw_count": 2187,
   "draws": [
     {
