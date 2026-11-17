@@ -126,6 +126,9 @@ def fetch_range(start_month: str, end_month: str) -> list[dict]:
         raise RuntimeError(
             f"{start_month} to {end_month}: expected {total_size} rows, received {len(result)}"
         )
+    periods = [row["period"] for row in result]
+    if len(periods) != len(set(periods)):
+        raise RuntimeError(f"{start_month} to {end_month}: API returned duplicate periods")
     return result
 
 
@@ -147,11 +150,17 @@ def main():
     else:
         old = {"draws": []}
 
-    by_period = {
-        str(item["period"]): item
-        for item in old.get("draws", [])
-        if isinstance(item, dict) and item.get("period")
-    }
+    old_draws = old.get("draws", [])
+    if not isinstance(old_draws, list):
+        raise RuntimeError("Existing data has no valid draws list; refusing to overwrite it.")
+    by_period = {}
+    for item in old_draws:
+        if not isinstance(item, dict) or not item.get("period"):
+            raise RuntimeError("Existing data contains a malformed draw; refusing to overwrite it.")
+        period = str(item["period"])
+        if period in by_period:
+            raise RuntimeError(f"Existing data contains duplicate period: {period}")
+        by_period[period] = item
 
     if args.full or not by_period:
         ranges = [
