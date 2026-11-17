@@ -1,13 +1,17 @@
 name: LOTTO AI 自動更新
 
 on:
+  push:
+    paths:
+      - "scripts/sync_lotto.py"
+      - ".github/workflows/update.yml"
   schedule:
     # 22:30 Taiwan time (UTC+8) every day
     - cron: "30 14 * * *"
   workflow_dispatch:
     inputs:
       full_sync:
-        description: "初次部署／重建歷史資料時勾選（API 可用資料自 2023-05 起）"
+        description: "完整重建 2007 年起的歷史資料（建議勾選）"
         required: false
         default: true
         type: boolean
@@ -40,7 +44,7 @@ jobs:
         env:
           FULL_SYNC: ${{ github.event.inputs.full_sync }}
         run: |
-          if [ "$FULL_SYNC" = "true" ] || [ ! -s data/draws.json ] || [ "$(python -c "import json; print(len(json.load(open('data/draws.json')).get('draws', [])))")" = "0" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "push" ] || [ "$FULL_SYNC" = "true" ] || [ ! -s data/draws.json ] || [ "$(python -c "import json; print(len(json.load(open('data/draws.json')).get('draws', [])))")" = "0" ]; then
             python scripts/sync_lotto.py --full
           else
             python scripts/sync_lotto.py
