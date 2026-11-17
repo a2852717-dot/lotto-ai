@@ -44,8 +44,8 @@ def parse_row(row: dict, month_range: str) -> dict:
     main, special = nums[:6], nums[6]
     if len(set(main)) != 6 or any(n < 1 or n > 49 for n in main):
         raise RuntimeError(f"{month_range}: {period} has invalid main numbers: {main}")
-    if not 1 <= special <= 49:
-        raise RuntimeError(f"{month_range}: {period} has invalid special number: {special}")
+    if not 1 <= special <= 49 or special in main:
+        raise RuntimeError(f"{month_range}: {period} has invalid or repeated special number: {special}")
     try:
         datetime.strptime(draw_date, "%Y-%m-%d")
     except ValueError as exc:
@@ -194,8 +194,8 @@ def main():
             raise RuntimeError(f"{period}: expected six unique main numbers")
         if any(not 1 <= int(number) <= 49 for number in draw["numbers"]):
             raise RuntimeError(f"{period}: main number outside 1-49")
-        if not 1 <= int(draw["special"]) <= 49:
-            raise RuntimeError(f"{period}: special number outside 1-49")
+        if not 1 <= int(draw["special"]) <= 49 or int(draw["special"]) in draw["numbers"]:
+            raise RuntimeError(f"{period}: invalid or repeated special number")
 
     OUT.parent.mkdir(exist_ok=True)
     payload = {
