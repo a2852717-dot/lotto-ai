@@ -2,10 +2,14 @@ name: LOTTO AI 自動更新
 
 on:
   push:
+    branches:
+      - "main"
     paths:
       - "scripts/sync_lotto.py"
       - ".github/workflows/update.yml"
       - "index.html"
+      - "requirements.txt"
+      - "data/draws.json"
   schedule:
     # 22:30 Taiwan time (UTC+8) every day
     - cron: "30 14 * * *"
