@@ -104,8 +104,8 @@ jobs:
               if len(set(numbers)) != 6 or any(not isinstance(n, int) or not 1 <= n <= 49 for n in numbers):
                   raise SystemExit(f"{draw.get('period')}: invalid main numbers")
               special = draw.get("special")
-              if not isinstance(special, int) or not 1 <= special <= 49:
-                  raise SystemExit(f"{draw.get('period')}: invalid special number")
+              if not isinstance(special, int) or not 1 <= special <= 49 or special in numbers:
+                  raise SystemExit(f"{draw.get('period')}: invalid or repeated special number")
           print(f"Validated {len(draws)} draws: {draws[0]['date']} to {draws[-1]['date']}")
           PY
       - name: Commit updated data
