@@ -35,6 +35,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -44,8 +46,17 @@ jobs:
       - name: Sync latest official lottery results
         env:
           FULL_SYNC: ${{ github.event.inputs.full_sync }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
-          if [ "$FULL_SYNC" = "true" ] || { [ "$GITHUB_EVENT_NAME" = "push" ] && ! git diff --quiet HEAD^ HEAD -- scripts/sync_lotto.py .github/workflows/update.yml; } || [ ! -s data/draws.json ] || [ "$(python -c "import json; print(len(json.load(open('data/draws.json')).get('draws', [])))")" = "0" ]; then
+          CODE_CHANGED=false
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            if [ -z "$PUSH_BEFORE" ] || [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              CODE_CHANGED=true
+            elif ! git diff --quiet "$PUSH_BEFORE" "$GITHUB_SHA" -- scripts/sync_lotto.py .github/workflows/update.yml; then
+              CODE_CHANGED=true
+            fi
+          fi
+          if [ "$FULL_SYNC" = "true" ] || [ "$CODE_CHANGED" = "true" ] || [ ! -s data/draws.json ] || [ "$(python -c "import json; print(len(json.load(open('data/draws.json')).get('draws', [])))")" = "0" ]; then
             python scripts/sync_lotto.py --full
           else
             python scripts/sync_lotto.py
