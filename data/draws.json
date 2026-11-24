@@ -1,8 +1,8 @@
 {
   "game": "大樂透",
   "source": "Taiwan Lottery official query API (historical monthly range)",
-  "updated_at": "2026-11-23T15:35:50+00:00",
-  "draw_count": 2189,
+  "updated_at": "2026-11-24T15:31:54+00:00",
+  "draw_count": 2190,
   "draws": [
     {
       "period": "96000001",
@@ -28460,6 +28460,19 @@
         38
       ],
       "special": 44
+    },
+    {
+      "period": "115000108",
+      "date": "2026-11-24",
+      "numbers": [
+        10,
+        11,
+        23,
+        24,
+        33,
+        42
+      ],
+      "special": 40
     }
   ]
 }
